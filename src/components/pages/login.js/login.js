@@ -1,56 +1,86 @@
 import React, { useState } from 'react'
 import firebase from '../../utils/firebase'
-import {  useHistory } from 'react-router-dom';
-export default function Login() {
+import { useHistory } from 'react-router-dom';
+export default function Login(props) {
+
+  let { id, dispatch } = props;
   const history = useHistory();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const login = () => {
-    console.log("email", email)
-    console.log("password", password)
-    firebase.auth().signInWithEmailAndPassword(email, password).then(() => {
-      alert("Logged In.");
-      // const { pathname } = Router
-      // if (pathname == '/Login') {
-      history.push('/dashboard')
-      // }
+    firebase.auth().signInWithEmailAndPassword(email, password).then((res) => {
+      console.log("login res : ", res);
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          let curuserid = firebase.auth().currentUser.uid;
+          console.log("curuserid", curuserid);
+          dispatch({
+            type: "SET_ID",
+            payload: curuserid
+          });
+          firebase.database().ref("/userRoles").on('value', (snapshot) => {
+            let main = snapshot.val();
+            main = Object.values(main);
+            console.log("user Roles :", main);
+            let checkRole = main.map(role => {
+              console.log("role ", role)
+              if (role.student == email) {
+                history.push('/dashboardstudent')
+                // return "student"
+              }
+              if (role.admin == email) {
+                history.push('/dashboard')
+                // return "admin"
+              }
+              else { return "notfound" }
+            });
+            console.log("check role ", checkRole)
+            // if(main.students.stuent)
+          })
+        }
+      })
+      // alert("Logged In.");
+      // history.push('/dashboard')
     }).catch((e) => { alert(e.message) })
   }
+
   return (
-    <div>
-      {/* <head>
+    <div className="w-screen  flex justify-center ">
+      <div className="w-1/2 flex flex-col  ">
+        {/* <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head> */}
 
-      <h2 className=" text-4xl text-center p- font-bold" >Login Form</h2>
-      {/* <form action="/action_page" method="post"> */}
-      {/* <form action="/dashboard" > */}
-      <div className=" flex justify-center mt-5 ">
-        <img src="https://png.pngtree.com/png-clipart/20190924/original/pngtree-user-vector-avatar-png-image_4830521.jpg"
-          alt="Avatar" className="avatar"
-          style={{ width: 60 }}
-        />
-      </div>
+        <h2 className=" text-4xl text-center p- font-bold mt-5" >Login</h2>
+        {/* <form action="/action_page" method="post"> */}
+        {/* <form action="/dashboard" > */}
+        <div className=" flex justify-center mt-5 ">
+          <img src="https://png.pngtree.com/png-clipart/20190924/original/pngtree-user-vector-avatar-png-image_4830521.jpg"
+            alt="Avatar" className="avatar"
+            style={{ width: 60 }}
+          />
+        </div>
 
-      <div className="container">
-        <label htmlFor="uname"><b>Email</b></label>
-        <input type="email" placeholder="Enter Email" name="uname" required onChange={(event) => { setEmail(event.target.value) }} />
+        <div className="container">
+          <label htmlFor="uname"><b>Email</b></label>
+          <input type="email" placeholder="Enter Email" name="uname" required onChange={(event) => { setEmail(event.target.value) }} />
 
-        <label htmlFor="psw"><b>Password</b></label>
-        <input type="password" placeholder="Enter Password" name="psw" required onChange={(event) => { setPassword(event.target.value) }} />
+          <label htmlFor="psw"><b>Password</b></label>
+          <input type="password" placeholder="Enter Password" name="psw" required onChange={(event) => { setPassword(event.target.value) }} />
 
-        {/* <button href="/dashboard" type="submit">Login</button> */}
-        <button onClick={() => { login() }} >Login</button>
-        <label>
-          <input type="checkbox" name="remember" /> Remember me
+          {/* <button href="/dashboard" type="submit">Login</button> */}
+          <button onClick={() => { login() }} >Login</button>
+          <label>
+            <input type="checkbox" name="remember" /> Remember me
                     </label>
-      </div>
-      <div className="container" style={{ backgroundColor: "#f1f1f1" }}>
-        <button type="button" className="cancelbtn">Cancel</button>
-        <span className="psw">Forgot <a href="/login">password?</a></span>
-      </div>
-      <style jsx="true">{
-        `
+        </div>
+        <div className="container" style={{ backgroundColor: "#f1f1f1" }}>
+          <button type="button" className="cancelbtn">Cancel</button>
+          <span className="psw">Forgot <a href="/login">password?</a></span>
+        </div>
+        <style jsx="true">{
+          `
 body {font-family: Arial, Helvetica, sans-serif;}
 form {border: 3px solid #f1f1f1;}
 
@@ -113,8 +143,9 @@ span.psw {
   }
 }
 `}
-      </style>
+        </style>
 
+      </div>
     </div>
   )
 }

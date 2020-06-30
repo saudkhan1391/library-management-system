@@ -1,38 +1,48 @@
 import React, { useState, useEffect } from 'react'
 import Button from '@material-ui/core/Button';
 import firebase from '../../../utils/firebase';
+import { AiOutlineCheckCircle } from 'react-icons/all'
 import AppBarSearch from '../../../../commonComponents/appbar';
-import {  AiOutlineDelete } from 'react-icons/all'
-export default function Dashboard() {
+export default function DashboardStudent() {
     const [books, setBooks] = useState("");
     const [filteredBooks, setFilteredBooks] = useState("");
     const [currentUserId, setCurrentUser] = useState("");
+    const [searchValue, setSearchValue] = useState("");
+    const [curUserEmail, setCurUserEmail] = useState("")
     useEffect(() => {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 let curuserid = firebase.auth().currentUser.uid;
                 setCurrentUser(curuserid);
-                console.log("curuserid", curuserid);
+                console.log(user.email, "user");
+                setCurUserEmail(user.email);
+
             }
-        });
+        })
         firebase.database().ref("/books/").on('value', (snapshot) => {
             // let main = { ...snapshot.val() };
             let main = snapshot.val();
-            
             let booksArray = Object.values(main);
-
-            let keys = Object.keys(main);
-            keys.map((value, index) => { booksArray[index].booking_id = value })
-
             console.log("books arry :", booksArray);
             console.log("snapshot VALUE :", main);
             setBooks(booksArray)
             setFilteredBooks(booksArray)
         });
     }, [])
-    function deleteIssueRequest(item) {
-        console.log("delete item : ", item)
-        firebase.database().ref("/books/" + item.booking_id).remove().then(res => { console.log("res delete : ", res) }).catch(e => { console.log("error : ", e) })
+    function issueBook(item) {
+        console.log("issued item", item);
+        if (item) {
+            let payload = { ...item, uid: currentUserId, userEmail: curUserEmail };
+            console.log("payload : ", payload);
+            firebase.database().ref("/issuedBooks").push(payload).then(res => {
+                console.log("res ", res);
+                alert("Added Successfully")
+            })
+                .catch(e => { alert(e.message); console.log("error :", e) })
+        }
+        else {
+            alert("Error")
+        }
     }
     function searchTableByName(key) {
         let value = key.toUpperCase();
@@ -48,25 +58,23 @@ export default function Dashboard() {
             // this.noRecordFound = true;
         }
     }
+
     return (
         <div>
-            <AppBarSearch  searchTableByName={searchTableByName} />
-            <div style={{ display: "flex", alignItems: "center", flexDirection: "column" }}>
+            <AppBarSearch setSearchValue={setSearchValue} searchTableByName={searchTableByName} />
+            {/* <div style={{ marginLeft: 50, width: 1100 }}> */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <div style={{ width: "70vw" }}>
-                    <div className=" border border-gray-500 p-5">
-                        <h1 style={{ marginLeft: 0 }} className=" text-4xl text-center">ADMIN DASHBOARD</h1>
+                    <div className=" border border-gray-500 p-5" style={{}}>
+                        <h1 style={{ marginLeft: 0 }} className=" text-4xl text-center">STUDENT DASHBOARD</h1>
                         <div className=" flex justify-around  border-gray-500 border-solid"
                             style={{ border: "solid 0px", justifyContent: " space-around", display: "flex", marginTop: 20 }}>
-                            <Button variant="contained" color="secondary" href="/enrollmember">
-                                Add Members
-                </Button>
-                            <Button variant="contained" color="secondary" href="/addbook">
-                                Add Book
-                </Button>
-                            <Button variant="contained" color="secondary" href="/issuebooks">
-                                {/* <Button variant="contained" color="secondary" href="/issuedbooks"> */}
-                            Issue Books
-                </Button>
+                            <Button variant="contained" color="secondary" href="/issuedbooks">
+                                View Issued Books
+                        </Button>
+                            {/* <Button variant="contained" color="secondary" href="/">
+                            Log Out
+                        </Button> */}
                         </div>
                     </div>
                     <div>
@@ -79,7 +87,7 @@ export default function Dashboard() {
                                     <th>ISBN</th>
                                     <th>Publication</th>
                                     <th>Publishing Date</th>
-                                    <th>Delete</th>
+                                    <th>Issue</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -90,18 +98,20 @@ export default function Dashboard() {
                                         <td>{value.isbn}</td>
                                         <td>{value.publication}</td>
                                         <td>{value.publishingDate}</td>
-                                        <td className="issueIcon" onClick={() => { deleteIssueRequest(value) }}>
-                                        <AiOutlineDelete size={44} style={{ color: "green" }} /></td>
+                                        <td className="issueIcon" onClick={() => { issueBook(value) }}><AiOutlineCheckCircle size={44} style={{ color: "green" }} /></td>
                                     </tr>
                                 })}
-
-
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
             <style jsx="true">{`
+            .issueIcon:hover{
+                background-color: rgba(0,0,0,0.2);
+                height:80;
+                // background-color: #dddddd;
+            }
             table {
                 font-family: arial, sans-serif;
                 border-collapse: collapse;

@@ -5,6 +5,9 @@ const reducer = (state, action) => {
     switch (action.type) {
         case "SET_LOADED_DATES":
             return { ...state, loadedDates: action.payload };
+        case "SET_ID":
+            // console.log("action type", action.payload)
+            return { ...state, id: action.payload };
         default:
             return state;
     }

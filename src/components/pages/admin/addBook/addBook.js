@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Form, FormGroup, Label, Input, FormFeedback, FormText } from 'reactstrap';
 import Button from '@material-ui/core/Button';
 import firebase from '../../../utils/firebase';
@@ -9,9 +9,16 @@ export default function AddBook() {
     const [publishingDate, setPublishingDate] = useState("")
     const [publication, setPublication] = useState("")
     const [isbn, setIsbn] = useState("");
-
+    const [currentUserId, setCurrentUser] = useState("");
+    useEffect(() => {
+        // let curuserid = firebase.auth().currentUser.uid;
+        // setCurrentUser(curuserid);
+    })
     function addBook() {
-        let data = { title: title, authorName: authorName, publishingDate: publishingDate, publication: publication, isbn: isbn }
+        let data = {
+            title: title, authorName: authorName, publishingDate: publishingDate,
+            publication: publication, isbn: isbn
+        }
         // firebase.database().ref("/appointments").child(appointmentId).set(data).then(res => {});
         if (title && authorName && publication && publishingDate && isbn) {
             firebase.database().ref("/books").push(data).then(res => {
